@@ -32,8 +32,17 @@ detect_libc() {
   esac
 }
 
+ID=$(grep '^ID=' /etc/os-release | cut -d= -f2)
+VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'"' -f2)
+
+if [[ "$ID" == "debian" ]] && [[ "$VERSION_ID" -le 11 ]]; then
+  LIBC="musl"
+else
+  LIBC="$(detect_libc)"
+fi
+
 ARCH="$(detect_arch)"
-LIBC="$(detect_libc)"
+
 RELEASES_PER_PAGE="10"
 
 INSTALL_DIR="/usr/local/bin"
@@ -293,6 +302,7 @@ create_telemt_user() {
             error "Telemt config not found"
             exit 1
         fi
+        proxy_users_list
         until [[ ${PROXY_USER_NAME_NEW} =~ ^[a-zA-Z0-9_\-]+$ && ${PROXY_USER_EXISTS} == '0' && "${#PROXY_USER_NAME_NEW}" -ge 1 && ${#PROXY_USER_NAME_NEW} -lt 16 ]]; do
             echo
             read -rp "Enter proxy username: " -e PROXY_USER_NAME_NEW
@@ -304,7 +314,7 @@ create_telemt_user() {
             fi
         done
     PROXY_USER_SECRET_NEW=$(openssl rand -hex 16)
-    echo "${PROXY_USER_NAME_NEW} = \"${PROXY_USER_SECRET_NEW}\"" >> "${TELEMT_CONF_DIR}/${TELEMT_CONF}"
+    sed -i  "/\[access\.users\]/a\\${PROXY_USER_NAME_NEW} = \"${PROXY_USER_SECRET_NEW}\"" ${TELEMT_CONF_DIR}/${TELEMT_CONF}
     echo
     success "User added: ${CYAN}${PROXY_USER_NAME_NEW}${NC}"
     echo
