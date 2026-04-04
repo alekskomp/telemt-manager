@@ -32,13 +32,13 @@ detect_libc() {
   esac
 }
 
-ID=$(grep '^ID=' /etc/os-release | cut -d= -f2)
-VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d'"' -f2)
+ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
-if [[ "$ID" == "debian" ]] && [[ "$VERSION_ID" -le 11 ]]; then
-  LIBC="musl"
+if [[ "$ID" == "debian" && "${VERSION_ID%%.*}" -le 11 ]] || [[ "$ID" == "ubuntu" && "${VERSION_ID%%.*}" -le 22 ]]; then
+    LIBC="musl"
 else
-  LIBC="$(detect_libc)"
+    LIBC="$(detect_libc)"
 fi
 
 ARCH="$(detect_arch)"
@@ -72,12 +72,6 @@ check_dependencies() {
         info "Installing missing packages..."
         if command -v apt-get &>/dev/null; then
             apt-get update -qq && apt-get install -y "${MISSING_CMDS[@]}"
-        elif command -v dnf &>/dev/null; then
-            dnf install -y "${MISSING_CMDS[@]}"
-        elif command -v yum &>/dev/null; then
-            yum install -y "${MISSING_CMDS[@]}"
-        elif command -v pacman &>/dev/null; then
-            pacman -Sy --noconfirm "${MISSING_CMDS[@]}"
         else
             error "Cannot detect package manager. Please install manually: ${MISSING_CMDS[*]}"
             exit 1
