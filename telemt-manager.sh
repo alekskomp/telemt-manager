@@ -36,9 +36,9 @@ ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
 if [[ "$ID" == "debian" && "${VERSION_ID%%.*}" -le 11 ]] || [[ "$ID" == "ubuntu" && "${VERSION_ID%%.*}" -le 22 ]]; then
-    LIBC="musl"
+  LIBC="musl"
 else
-    LIBC="$(detect_libc)"
+  LIBC="$(detect_libc)"
 fi
 
 ARCH="$(detect_arch)"
